@@ -1,0 +1,3 @@
+.python-version
+*.jsonl
+__pycache__

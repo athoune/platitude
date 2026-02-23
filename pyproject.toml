@@ -1,0 +1,14 @@
+[project]
+name = "platitude"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "beautifulsoup4>=4.14.3",
+    "bm25s>=0.3.0",
+    "numpy>=2.4.2",
+    "requests>=2.32.5",
+    "scikit-learn>=1.8.0",
+    "tqdm>=4.67.3",
+]
