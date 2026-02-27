@@ -1,5 +1,4 @@
-from .bm25 import Bm25, ngrams, Vocabulary
-from joblib import Parallel, delayed
+from .bm25 import Bm25, Vocabulary, ngrams
 
 
 def test_index():
@@ -11,9 +10,11 @@ def test_index():
         "a fish is a creature that lives in water and swims",
     ]
     index.index(corpus)
-    index.compute(2)
+    assert len(index.documents) == len(corpus)
 
-    print("Matrix", index.matrix.shape)
+    index.compute(2)
+    assert index.matrix.shape == (len(index.documents), len(index.vocabulary))
+
     stats = index.vocab_stats()
     print(list(stats))
 
@@ -26,9 +27,8 @@ def test_ngrams():
         "a fish is a creature that lives in water and swims",
         "don't eat cats. Nor dogs",
     ]
-    for doc in corpus:
-        ngs = ngrams(doc, 2)
-        print(list(ngs))
+    ngs = ngrams(corpus[0], 2)
+    assert list(ngs)[:4] == ["a cat", "cat is", "is a", "a feline"]
 
 
 def test_vocabulary():

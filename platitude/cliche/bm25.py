@@ -1,9 +1,9 @@
-import numpy as np
-
-from typing import Iterable, Generator
-from tqdm import tqdm
-from joblib import Parallel, delayed
 import re
+from typing import Generator, Iterable
+
+import numpy as np
+from joblib import Parallel, delayed
+from tqdm import tqdm
 
 
 class Vocabulary:
@@ -34,6 +34,7 @@ class Bm25:
         self.ngram_size = ngram_size
 
     def index(self, corpus: Iterable[str]) -> None:
+        assert not isinstance(corpus, str)
         for doc in corpus:
             ids = self.vocabulary.to_ids(ngrams(doc, self.ngram_size))
             self.documents.append(np.array(ids, dtype=np.int32))
@@ -54,7 +55,9 @@ class Bm25:
         return line
 
     def compute(self, n_jobs: int = -1):
-        self.matrix = np.array([line for line in self.compute_matrix(n_jobs)])
+        self.matrix = np.zeros((len(self.documents), len(self.vocabulary)))
+        for i, line in enumerate(self.compute_matrix(n_jobs)):
+            self.matrix[i] = line
         self._nq = self.matrix.sum(axis=0)
         self._IDF = np.zeros(len(self.vocabulary), dtype=np.float32)
         self._avgdl = np.float32(0)
@@ -98,10 +101,15 @@ class Bm25:
         )
 
     def vocab_stats(self):
-        print(self.matrix)
-        for k, v in tqdm(self.vocabulary.vocab.items(), desc="Vocab stats"):
-            print(v, self.matrix[:, v])
+        for k, v in tqdm(
+            self.vocabulary.vocab.items(),
+            total=len(self.vocabulary),
+            desc="Vocab stats",
+        ):
             yield k, self.matrix[:, v].sum()
+
+    def top(self, n=10):
+        return sorted(self.vocab_stats(), key=lambda x: x[1], reverse=True)[:n]
 
 
 RE_SENTENCES = re.compile(r"[.,!?]+")
