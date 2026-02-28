@@ -58,6 +58,7 @@ logger = logging.getLogger(__name__)
 # Data model
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Speech:
     title: str
@@ -70,6 +71,7 @@ class Speech:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def get_soup(url: str, session: requests.Session) -> BeautifulSoup:
     """Fetch a URL and return a BeautifulSoup object."""
@@ -178,6 +180,7 @@ def fetch_speech_text(url: str, session: requests.Session) -> Optional[str]:
 # Main scraping logic
 # ---------------------------------------------------------------------------
 
+
 def collect_all_entries(session: requests.Session, max_pages: int = 100) -> list[dict]:
     """
     Paginate through search result pages and collect every speech entry
@@ -281,9 +284,7 @@ def scrape_all_speeches(
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Scrape speeches from vie-publique.fr"
-    )
+    parser = argparse.ArgumentParser(description="Scrape speeches from vie-publique.fr")
     parser.add_argument(
         "--no-full-text",
         action="store_true",
