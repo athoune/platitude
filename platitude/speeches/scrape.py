@@ -45,7 +45,7 @@ HEADERS = {
     "Accept-Language": "fr-FR,fr;q=0.9",
 }
 
-REQUEST_DELAY = 1.5  # seconds between requests – be polite to the server
+REQUEST_DELAY = 0.5  # seconds between requests – be polite to the server
 
 logging.basicConfig(
     level=logging.INFO,
