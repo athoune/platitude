@@ -106,7 +106,8 @@ class Bm25:
             total=len(self.vocabulary),
             desc="Vocab stats",
         ):
-            yield k, self.matrix[:, v].sum()
+            yield k, self.matrix[:, v].sum() * self.IDF(v)
+            # / len(self.matrix[:, v].nonzero()[0])
 
     def top(self, n=10):
         return sorted(self.vocab_stats(), key=lambda x: x[1], reverse=True)[:n]
