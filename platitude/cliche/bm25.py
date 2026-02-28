@@ -113,7 +113,7 @@ class Bm25:
         return sorted(self.vocab_stats(), key=lambda x: x[1], reverse=True)[:n]
 
 
-RE_SENTENCES = re.compile(r"[.,!?]+")
+RE_SENTENCES = re.compile(r"[.,!?]+| - ")
 
 
 def ngrams(doc: str, n: int = 1):
