@@ -19,13 +19,9 @@ class Matrix:
     def append_row(self, row: np.ndarray):
         assert len(row.shape) == 1, "One dimension array, not a matrix."
         assert row.dtype == self.dtype
-        print("row", row, row.itemsize)
-        print("poz", self.columns_fd.tell())
         np.uint32(self.matrix_fd.tell()).tofile(self.columns_fd)
-        print("length", self.columns_fd.tell(), row.shape[0])
         np.uint32(row.shape[0]).tofile(self.columns_fd)
         row.tofile(self.matrix_fd)
-        print("matrix", self.matrix_fd.tell())
 
     def close(self):
         self.matrix_fd.close()
@@ -45,31 +41,35 @@ class Matrix:
         )
         return tl[0], tl[1]
 
-    def __getitem__(self, key) -> np.ndarray | int | float | np.unsignedinteger:
-        if isinstance(key, int):
-            tell, length = self._columns(key)
-            self.matrix_fd.seek(0)
-            return np.fromfile(
-                self.matrix_fd, dtype=self.dtype, offset=tell, count=length
-            )
-        elif isinstance(key, tuple):
-            assert len(key) == 2
-            poz = key[0] * 8
-            self.columns_fd.seek(0)
-            tell = np.fromfile(self.columns_fd, dtype=np.uint32, offset=poz, count=1)[0]
-            length = np.fromfile(self.columns_fd, dtype=np.uint32, count=1)[0]
-            if key[1] >= length:
-                return self.dtype(0)
-            self.matrix_fd.seek(0)
-            return np.fromfile(
-                self.matrix_fd,
-                dtype=self.dtype,
-                offset=tell + key[1] * np.dtype(self.dtype).itemsize,
-                count=1,
-            )[0]
+    def __getitem__(self, key) -> np.ndarray:
+        assert isinstance(key, tuple)
+        assert len(key) == 2
+        poz: int = key[0] * 8
+        tell: np.uint32 = np.fromfile(
+            self.columns_fd,
+            dtype=np.uint32,
+            offset=poz - self.columns_fd.tell(),
+            count=1,
+        )[0]
+        length = np.fromfile(self.columns_fd, dtype=np.uint32, count=1)[0]
+        if key[1] >= length:
+            return self.dtype(0)
+        self.matrix_fd.seek(0)
+        return np.fromfile(
+            self.matrix_fd,
+            dtype=self.dtype,
+            offset=tell + key[1] * np.dtype(self.dtype).itemsize,
+            count=1,
+        )[0]
 
-        else:
-            raise NotImplementedError()
+    def row(self, r) -> np.ndarray:
+        tell, length = self._columns(r)
+        return np.fromfile(
+            self.matrix_fd,
+            dtype=self.dtype,
+            offset=int(tell) - self.matrix_fd.tell(),
+            count=length,
+        )
 
     def column(self, c):
         size: int = int(self.columns_path.lstat().st_size / 8)

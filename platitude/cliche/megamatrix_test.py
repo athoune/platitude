@@ -13,8 +13,8 @@ def test_row():
 
     matrix2 = Matrix(f"{tmp.name}/matrix_db", mode="rb", dtype=np.int64)
     matrix2.read()
-    assert not (matrix2[0] - np.array([2, 4, 6, 8], dtype=np.int64)).all()
-    assert not (matrix2[1] - np.array([7, 8, 9], dtype=np.int64)).all()
+    assert not (matrix2.row(0) - np.array([2, 4, 6, 8], dtype=np.int64)).all()
+    assert not (matrix2.row(1) - np.array([7, 8, 9], dtype=np.int64)).all()
     assert matrix2[1, 1] == 8
     assert matrix2[0, 0] == 2
     assert matrix2[0, 100] == 0
