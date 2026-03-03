@@ -1,5 +1,6 @@
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 
 
 class Matrix:
@@ -26,6 +27,10 @@ class Matrix:
     def close(self):
         self.matrix_fd.close()
         self.columns_fd.close()
+
+    def flush(self):
+        self.matrix_fd.flush()
+        self.columns_fd.flush()
 
     def read(self):
         np.fromfile(self.columns_fd, dtype=np.uint32)
@@ -72,5 +77,22 @@ class Matrix:
         )
 
     def column(self, c):
-        size: int = int(self.columns_path.lstat().st_size / 8)
-        return np.array([self[row, c] for row in range(size)], dtype=self.dtype)
+        return np.array([self[row, c] for row in range(len(self))], dtype=self.dtype)
+
+    def __len__(self):
+        return int(self.columns_path.lstat().st_size / 8)
+
+    def __iter__(self):
+        return MatrixIterator(self)
+
+
+class MatrixIterator:
+    def __init__(self, matrix: Matrix):
+        self.matrix = matrix
+        self.lines = iter(range(len(matrix)))
+        self.matrix.matrix_fd.seek(0)
+        self.matrix.columns_fd.seek(0)
+
+    def __next__(self):
+        line = next(self.lines)
+        return self.matrix.row(line)

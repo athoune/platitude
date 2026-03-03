@@ -1,7 +1,8 @@
-from .megamatrix import Matrix
 from tempfile import TemporaryDirectory
+
 import numpy as np
-import os
+
+from .megamatrix import Matrix
 
 
 def test_row():
@@ -18,8 +19,12 @@ def test_row():
     assert matrix2[1, 1] == 8
     assert matrix2[0, 0] == 2
     assert matrix2[0, 100] == 0
-    matrix2.close()
 
+    data = (np.array([2, 4, 6, 8], dtype=np.int64), np.array([7, 8, 9], dtype=np.int64))
+    for i, row in enumerate(matrix2):
+        assert not (row - data[i]).all()
+
+    matrix2.close()
     tmp.cleanup()
 
 
