@@ -20,8 +20,8 @@ class Matrix:
     def append_row(self, row: np.ndarray):
         assert len(row.shape) == 1, "One dimension array, not a matrix."
         assert row.dtype == self.dtype
-        np.uint32(self.matrix_fd.tell()).tofile(self.columns_fd)
-        np.uint32(row.shape[0]).tofile(self.columns_fd)
+        np.uint64(self.matrix_fd.tell()).tofile(self.columns_fd)
+        np.uint64(row.shape[0]).tofile(self.columns_fd)
         row.tofile(self.matrix_fd)
 
     def close(self):
@@ -37,10 +37,10 @@ class Matrix:
         np.fromfile(self.matrix_fd, dtype=self.dtype)
 
     def _columns(self, key) -> tuple[int, int]:
-        poz = key * 8
+        poz = key * 16
         tl = np.fromfile(
             self.columns_fd,
-            dtype=np.uint32,
+            dtype=np.uint64,
             offset=poz - self.columns_fd.tell(),
             count=2,
         )
@@ -49,14 +49,14 @@ class Matrix:
     def __getitem__(self, key) -> np.ndarray:
         assert isinstance(key, tuple)
         assert len(key) == 2
-        poz: int = key[0] * 8
+        poz: int = key[0] * 16
         tell: np.uint32 = np.fromfile(
             self.columns_fd,
-            dtype=np.uint32,
+            dtype=np.uint64,
             offset=poz - self.columns_fd.tell(),
             count=1,
         )[0]
-        length = np.fromfile(self.columns_fd, dtype=np.uint32, count=1)[0]
+        length = np.fromfile(self.columns_fd, dtype=np.uint64, count=1)[0]
         if key[1] >= length:
             return self.dtype(0)
         self.matrix_fd.seek(0)
@@ -80,7 +80,7 @@ class Matrix:
         return np.array([self[row, c] for row in range(len(self))], dtype=self.dtype)
 
     def __len__(self):
-        return int(self.columns_path.lstat().st_size / 8)
+        return int(self.columns_path.lstat().st_size / 16)
 
     def __iter__(self):
         return MatrixIterator(self)
