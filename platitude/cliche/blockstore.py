@@ -3,9 +3,10 @@ from pathlib import Path
 from .index import Index
 
 
-class Blockstore:
-    def __init__(self, path: str, mode="xb+"):
-        self.index = Index(Path(f"{path}/index"), "LI")
+class BlockStore:
+    def __init__(self, path: Path, mode="xb+"):
+        p = Path(path) / "index"
+        self.index = Index(p, "LI")
         self.data_fd = open(f"{path}/data", mode=mode)
 
     def append(self, block: bytes):
@@ -19,6 +20,9 @@ class Blockstore:
     def close(self):
         self.index.close()
         self.data_fd.close()
+
+    def tell(self) -> int:
+        return self.data_fd.tell()
 
     def __getitem__(self, index) -> bytes:
         poz, size = self.index[index]
