@@ -2,6 +2,8 @@ from pathlib import Path
 
 import numpy as np
 
+from .archive import Archive
+
 
 class Matrix:
     """
@@ -11,30 +13,20 @@ class Matrix:
     You can get a specific point.
     """
 
-    def __init__(self, path: str, dtype=np.uint32, mode="xb+"):
-        self.columns_path = Path(f"{path}_columns")
-        self.matrix_fd = open(path, mode=mode)
-        self.columns_fd = open(f"{path}_columns", mode=mode)
+    def __init__(self, path: Path, dtype=np.uint32, mode="xb+", prefix=""):
+        self.matrix = Archive(path, prefix=prefix, mode=mode)
         self.dtype = dtype
 
     def append_row(self, row: np.ndarray):
         assert len(row.shape) == 1, "One dimension array, not a matrix."
         assert row.dtype == self.dtype
-        np.uint64(self.matrix_fd.tell()).tofile(self.columns_fd)
-        np.uint64(row.shape[0]).tofile(self.columns_fd)
-        row.tofile(self.matrix_fd)
+        self.matrix.write(row.tobytes())
 
     def close(self):
-        self.matrix_fd.close()
-        self.columns_fd.close()
+        self.matrix.close()
 
     def flush(self):
-        self.matrix_fd.flush()
-        self.columns_fd.flush()
-
-    def read(self):
-        np.fromfile(self.columns_fd, dtype=np.uint32)
-        np.fromfile(self.matrix_fd, dtype=self.dtype)
+        self.matrix.flush()
 
     def _columns(self, key) -> tuple[int, int]:
         poz = key * 16
@@ -46,52 +38,38 @@ class Matrix:
         )
         return tl[0], tl[1]
 
-    def __getitem__(self, key) -> np.ndarray:
+    def __getitem__(self, key):
         assert isinstance(key, tuple)
         assert len(key) == 2
-        poz: int = key[0] * 16
-        tell: np.uint32 = np.fromfile(
-            self.columns_fd,
-            dtype=np.uint64,
-            offset=poz - self.columns_fd.tell(),
-            count=1,
-        )[0]
-        length = np.fromfile(self.columns_fd, dtype=np.uint64, count=1)[0]
-        if key[1] >= length:
-            return self.dtype(0)
-        self.matrix_fd.seek(0)
-        return np.fromfile(
-            self.matrix_fd,
-            dtype=self.dtype,
-            offset=tell + key[1] * np.dtype(self.dtype).itemsize,
-            count=1,
-        )[0]
+        return Infinite_row(self.row(key[0]))[key[1]]
 
     def row(self, r) -> np.ndarray:
-        tell, length = self._columns(r)
-        return np.fromfile(
-            self.matrix_fd,
-            dtype=self.dtype,
-            offset=int(tell) - self.matrix_fd.tell(),
-            count=length,
-        )
+        return np.frombuffer(self.matrix[r], dtype=self.dtype)
 
     def column(self, c):
         return np.array([self[row, c] for row in range(len(self))], dtype=self.dtype)
 
     def __len__(self):
-        return int(self.columns_path.lstat().st_size / 16)
+        return len(self.matrix)
 
     def __iter__(self):
         return MatrixIterator(self)
+
+
+class Infinite_row:
+    def __init__(self, row: np.ndarray):
+        self.row = row
+
+    def __getitem__(self, key: int):
+        if key >= len(self.row):
+            return 0
+        return self.row[key]
 
 
 class MatrixIterator:
     def __init__(self, matrix: Matrix):
         self.matrix = matrix
         self.lines = iter(range(len(matrix)))
-        self.matrix.matrix_fd.seek(0)
-        self.matrix.columns_fd.seek(0)
 
     def __next__(self):
         line = next(self.lines)
