@@ -4,10 +4,11 @@ from .index import Index
 
 
 class BlockStore:
-    def __init__(self, path: Path, mode="xb+"):
-        p = Path(path) / "index"
-        self.index = Index(p, "LI")
-        self.data_fd = open(f"{path}/data", mode=mode)
+    def __init__(self, path: Path, mode="xb+", prefix=""):
+        assert path.is_dir()
+        self.path = path
+        self.index = Index(self.path / f"{prefix}index", "LI", mode=mode)
+        self.data_fd = (self.path / f"{prefix}data").open(mode=mode)
 
     def append(self, block: bytes):
         self.index.append(self.data_fd.tell(), len(block))

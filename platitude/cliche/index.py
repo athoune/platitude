@@ -3,9 +3,9 @@ from pathlib import Path
 
 
 class Index:
-    def __init__(self, path: Path, format: str):
+    def __init__(self, path: Path, format: str, mode="xb+"):
         self.path = path
-        self.fd = self.path.open(mode="xb+")
+        self.fd = self.path.open(mode=mode)
         self.pack = struct.Struct(format)
         self._arity = 0
 

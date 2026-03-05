@@ -8,17 +8,15 @@ from .index import Index
 
 
 class Archive:
-    def __init__(self, path: str):
-        p = Path(path) / "archive"
-        p.mkdir()
-        self.store = BlockStore(p, "xb+")
+    def __init__(self, path: Path, prefix="archive_", mode="xb+"):
+        self.store = BlockStore(path, prefix=prefix, mode=mode)
 
         """
          * n_archive: id of the archive
          * index: position in the archive
          * size: size of the archive
         """
-        self.index_data = Index(Path(path) / "archive_data_index", "III")
+        self.index_data = Index(path / "archive_block_index", "III", mode=mode)
 
         self.buffer = BytesIO()
         self.block_size = 1024**2

@@ -1,4 +1,5 @@
 from tempfile import TemporaryDirectory
+from pathlib import Path
 
 import lz4.block
 
@@ -7,7 +8,7 @@ from .archive import Archive
 
 def test_archive():
     tmp = TemporaryDirectory()
-    a = Archive(tmp.name)
+    a = Archive(Path(tmp.name))
     a.block_size = 100
     assert a.archive_n == 0
     a.write(
