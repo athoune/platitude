@@ -10,6 +10,9 @@ class Index:
         self._arity = 0
 
     def __getitem__(self, n: int) -> tuple:
+        l = len(self)
+        if n >= l:
+            raise KeyError(f"key {n} with an Index of size {l}")
         self.fd.seek(n * self.pack.size, 0)
         return self.pack.unpack(self.fd.read(self.pack.size))
 
