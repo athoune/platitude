@@ -1,7 +1,9 @@
-from .index import Index
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
 from pytest import raises
+
+from .index import Index
 
 
 def test_index():
