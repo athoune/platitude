@@ -31,3 +31,19 @@ class BlockStore:
 
     def __len__(self):
         return len(self.index)
+
+    def __iter__(self):
+        return iterator(self)
+
+
+class iterator:
+    def __init__(self, store):
+        self.store = store
+        self.n = -1
+        self.last = len(store)
+
+    def __next__(self):
+        self.n += 1
+        if self.n == self.last:
+            raise StopIteration
+        return self.store[self.n]
