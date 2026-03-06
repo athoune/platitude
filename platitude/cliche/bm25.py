@@ -1,7 +1,7 @@
+from collections import Counter, defaultdict
 import re
-import sys
-from typing import Generator, Iterable
 from pathlib import Path
+from typing import Iterable
 
 import numpy as np
 from tqdm import tqdm
@@ -37,16 +37,18 @@ class Bm25:
     def __init__(self, path: Path, ngram_start: int = 3, ngram_end: int = 4):
         self.vocabulary = Vocabulary()
         print("path", f"{path}/data")
-        self.matrix = Matrix(path, prefix="data", dtype=np.uint32)
         self.documents = Matrix(path, prefix="documents", dtype=np.uint32)
         self.ngram_start = ngram_start
         self.ngram_end = ngram_end
+        self.token_counter = defaultdict[int, int](int)
 
     def index(self, corpus: Iterable[str]) -> None:
         assert not isinstance(corpus, str)
         for doc in corpus:
             tokens = ngrams(doc, self.ngram_start, self.ngram_end)
             ids = self.vocabulary.to_ids(tokens)
+            for i in set(ids):
+                self.token_counter[i] += 1
             row = np.zeros(self.vocabulary.idx, dtype=np.uint32)
             for token in ids:
                 row[token] += 1
@@ -54,7 +56,6 @@ class Bm25:
         self.documents.flush()
 
     def flush(self):
-        self.matrix.flush()
         self.documents.flush()
 
     def compute(self, n_jobs: int = -1):
@@ -63,7 +64,7 @@ class Bm25:
         self._avgdl = np.float32(0)
 
     def n(self, q: int) -> int:
-        return self.documents.column(q).sum()
+        return self.token_counter[q]
 
     def f(self, q: int, D: int) -> np.int32:
         return self.documents[D][q]
@@ -106,12 +107,11 @@ class Bm25:
             self.vocabulary.vocab.items(),
             desc="Vocab stats",
         ):
-            yield k, self.documents.column(v).sum() * self.IDF(v)
+            yield k, self.token_counter[v] * self.IDF(v)
             # / len(self.matrix[:, v].nonzero()[0])
 
     def vocab_stats_all(self, threshold: float = 0):
-        matrix, mask = self.matrix
-        self.IDF_all(documents.sum[0])
+        self.IDF_all(self.documents.sum[0])
 
     def top(self, n=10):
         return sorted(self.vocab_stats(), key=lambda x: x[1], reverse=True)[:n]
@@ -122,7 +122,7 @@ RE_SENTENCES = re.compile(r"[.,!?]+| - ")
 
 def ngrams(doc: str, start: int = 1, end: int = 1):
     for sentence in RE_SENTENCES.split(doc):
-        words = sentence.lower().strip().split()
+        words = sentence.lower().strip("\n ").split()
         for j in range(start, end + 1):
             for i in range(len(words) - j + 1):
                 yield " ".join(words[i : i + j])

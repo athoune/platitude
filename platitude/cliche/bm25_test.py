@@ -1,6 +1,7 @@
-from .bm25 import Bm25, Vocabulary, ngrams
-from tempfile import TemporaryDirectory
 from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from .bm25 import Bm25, Vocabulary, ngrams
 
 
 def test_index():
@@ -72,7 +73,7 @@ def test_vocab_stats():
 
     stats = dict(index.vocab_stats())
     assert stats["a cat"] > 1
-    print(index.top())
+    print("top", index.top())
     assert index.top()[0][0] == "a cat"
 
     tmp.cleanup()
