@@ -47,7 +47,18 @@ class Matrix:
         return np.frombuffer(self.data[r], dtype=self.dtype)
 
     def column(self, c):
-        return np.array([self[row, c] for row in range(len(self))], dtype=self.dtype)
+        return np.array(
+            [
+                self[
+                    (
+                        row,
+                        c,
+                    )
+                ]
+                for row in range(len(self))
+            ],
+            dtype=self.dtype,
+        )
 
     def __len__(self):
         return len(self.data)
