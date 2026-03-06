@@ -16,7 +16,7 @@ class Archive:
          * index: position in the archive
          * size: size of the archive
         """
-        self.index_data = Index(path / "archive_block_index", "III", mode=mode)
+        self.index_data = Index(path / f"{prefix}block_index", "III", mode=mode)
 
         self.buffer = BytesIO()
         self.block_size = 1024**2
