@@ -14,19 +14,19 @@ class Matrix:
     """
 
     def __init__(self, path: Path, dtype=np.uint32, mode="xb+", prefix=""):
-        self.matrix = Archive(path, prefix=prefix, mode=mode)
+        self.data = Archive(path, prefix=prefix, mode=mode)
         self.dtype = dtype
 
     def append_row(self, row: np.ndarray):
         assert len(row.shape) == 1, "One dimension array, not a matrix."
         assert row.dtype == self.dtype
-        self.matrix.write(row.tobytes())
+        self.data.write(row.tobytes())
 
     def close(self):
-        self.matrix.close()
+        self.data.close()
 
     def flush(self):
-        self.matrix.flush()
+        self.data.flush()
 
     def _columns(self, key) -> tuple[int, int]:
         poz = key * 16
@@ -44,13 +44,13 @@ class Matrix:
         return Infinite_row(self.row(key[0]))[key[1]]
 
     def row(self, r) -> np.ndarray:
-        return np.frombuffer(self.matrix[r], dtype=self.dtype)
+        return np.frombuffer(self.data[r], dtype=self.dtype)
 
     def column(self, c):
         return np.array([self[row, c] for row in range(len(self))], dtype=self.dtype)
 
     def __len__(self):
-        return len(self.matrix)
+        return len(self.data)
 
     def __iter__(self):
         return MatrixIterator(self)
