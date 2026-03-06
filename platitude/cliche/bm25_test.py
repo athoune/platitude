@@ -1,4 +1,6 @@
 from .bm25 import Bm25, Vocabulary, ngrams
+from tempfile import TemporaryDirectory
+from pathlib import Path
 
 
 def test_index():
@@ -48,3 +50,29 @@ def test_vocabulary():
     assert len(arrays) == len(vocabulary.vocab)
     for token in arrays:
         assert token in vocabulary.vocab
+
+
+def test_vocab_stats():
+    tmp = TemporaryDirectory()
+    index = Bm25(Path(tmp.name), 2, 3)
+    corpus = [
+        "a cat is a feline and likes to purr",
+        "a dog is the human's best friend and loves to play",
+        "a bird is a beautiful animal that can fly",
+        "a fish is a creature that lives in water and swims",
+        "I want to eat a cat",
+    ]
+    index.index(corpus)
+    index.flush()
+    assert len(index.documents) == len(corpus)
+
+    for k, v in index.vocabulary.vocab.items():
+        idf = index.IDF(v)
+        print(k, idf)
+
+    stats = dict(index.vocab_stats())
+    assert stats["a cat"] > 1
+    print(index.top())
+    assert index.top()[0][0] == "a cat"
+
+    tmp.cleanup()
