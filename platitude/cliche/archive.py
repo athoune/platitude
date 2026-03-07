@@ -22,6 +22,8 @@ class Archive:
         self.block_size = 1024**2
         self.archive_n = 0
         self.archive_poz = 0
+        self.size_compressed = 0
+        self.size_data = 0
 
     def write(self, data: bytes):
         self.index_data.append(
@@ -38,7 +40,9 @@ class Archive:
     def _write_buffer(self):
         self.buffer.seek(0)
         block: bytes = self.buffer.read()
+        self.size_data += len(block)
         compressed_data: bytes = lz4.block.compress(block)
+        self.size_compressed += len(compressed_data)
         self.store.append(compressed_data)
         self.buffer.truncate()
         self.archive_n += 1
@@ -65,3 +69,6 @@ class Archive:
         n_archive, index, size = self.index_data[n]
         archive = lz4.block.decompress(self.store[n_archive])
         return archive[index : index + size]
+
+    def compression_ratio(self) -> float:
+        return self.size_compressed / self.size_data
