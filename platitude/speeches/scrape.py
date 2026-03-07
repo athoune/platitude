@@ -13,6 +13,7 @@ import logging
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from typing import Optional
+import urllib.parse
 
 import requests
 from bs4 import BeautifulSoup
@@ -30,7 +31,7 @@ SEARCH_URL = (
     "https://www.vie-publique.fr/discours/recherche"
     "?search_api_fulltext_discours="
     "&sort_by=field_date_prononciation_discour"
-    "&field_intervenant_title=Jacques+Chirac"
+    "&field_intervenant_title={who}"
     "&field_intervenant_qualite="
     "&field_date_prononciation_discour_interval%5Bmin%5D="
     "&field_date_prononciation_discour_interval%5Bmax%5D="
@@ -181,7 +182,9 @@ def fetch_speech_text(url: str, session: requests.Session) -> Optional[str]:
 # ---------------------------------------------------------------------------
 
 
-def collect_all_entries(session: requests.Session, max_pages: int = 100) -> list[dict]:
+def collect_all_entries(
+    session: requests.Session, who: str, max_pages: int = 100
+) -> list[dict]:
     """
     Paginate through search result pages and collect every speech entry
     (metadata only: title, url, date, speech_type).
@@ -198,7 +201,7 @@ def collect_all_entries(session: requests.Session, max_pages: int = 100) -> list
 
     with tqdm(desc="Listing pages", unit="page", total=max_pages) as pbar:
         while page < max_pages:
-            url = SEARCH_URL.format(page=page)
+            url = SEARCH_URL.format(page=page, who=urllib.parse.quote_plus(who))
             try:
                 soup = get_soup(url, session)
             except requests.RequestException as exc:
@@ -251,7 +254,7 @@ def scrape_all_speeches(
     logger.info(f"Starting scrape for {who} speeches …")
 
     # Step 1 – collect all entries from the listing pages
-    entries = collect_all_entries(session, max_pages=max_pages)
+    entries = collect_all_entries(session, who, max_pages=max_pages)
     logger.info("Found %d unique speeches across listing pages.", len(entries))
 
     # Step 2 – fetch full text and write each speech as a JSONL line
@@ -307,6 +310,8 @@ if __name__ == "__main__":
         help="Who to scrape speeches for (default: Jacques Chirac)",
     )
     args = parser.parse_args()
+
+    print(args)
 
     total = scrape_all_speeches(
         fetch_full_text=not args.no_full_text,
