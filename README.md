@@ -25,6 +25,7 @@ python -m platitude.speeches.scrape --output chirac.jsonl --max-pages 1000  --wh
 Launch Jupyter
 
 ```bash
+uv sync --extra jupyter
 jupyter lab
 ```
 
