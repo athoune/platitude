@@ -77,3 +77,25 @@ def test_vocab_stats():
     assert index.top()[0][0] == "a cat"
 
     tmp.cleanup()
+
+
+def test_dump_load():
+    corpus = [
+        "a cat is a feline and likes to purr",
+        "a dog is the human's best friend and loves to play",
+        "a bird is a beautiful animal that can fly",
+        "a fish is a creature that lives in water and swims",
+        "don't eat cats. Nor dogs",
+    ]
+    vocabulary = Vocabulary()
+    for doc in corpus:
+        vocabulary.to_ids(ngrams(doc, 2))
+    bird = vocabulary.to_ids(["a bird"])[0]
+    tmp = TemporaryDirectory()
+    dump = Path(tmp.name) / "vocab.txt"
+    vocabulary.dump(dump.open("w"))
+
+    vocabulary2 = Vocabulary.loadVocabulary(dump.open("r"))
+    assert "a bird" == vocabulary2[bird]
+
+    tmp.cleanup()

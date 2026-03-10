@@ -1,7 +1,7 @@
 from collections import Counter, defaultdict
 import re
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Self
 
 import numpy as np
 from tqdm import tqdm
@@ -31,6 +31,22 @@ class Vocabulary:
 
     def __getitem__(self, n):
         return list(self.vocab.keys())[n]
+
+    def dump(self, writer):
+        for i, (token, rank) in enumerate(self.vocab.items()):
+            assert (
+                i == rank
+            ), f"Vocabulary mismatch, {i}th element should not have rank {rank}"
+            writer.write(token)
+            writer.write("\n")
+        writer.flush()
+
+    @classmethod
+    def loadVocabulary(cls, reader) -> Self:
+        v = Vocabulary()
+        for i, line in enumerate(reader.readlines()):
+            v.vocab[line[:-1]] = i
+        return v
 
 
 class Bm25:
